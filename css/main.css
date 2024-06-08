@@ -1,0 +1,63 @@
+body {
+    background-color: #000;
+    color: #fff;
+}
+
+.container {
+    padding: 1.5rem;
+    margin-top: 1rem;
+    width: min(65rem, 100%);
+}
+
+#subheader {
+    margin-bottom: 1rem;
+}
+
+#back-btn {
+    background-color: #181818;
+    color: #fff;
+    border: 0.0125rem solid #fff;
+    border-radius: 0.5rem;
+
+    padding: 0.5rem 1rem;
+
+    transition: background-color 0.25s ease-in-out;
+}
+
+#back-btn:where(:hover, :focus-visible) {
+    cursor: pointer;
+    background-color: #282828;
+}
+
+#cards {
+    list-style-type: none;
+
+    display: grid;
+    --cols: 1;
+    grid-template-columns: repeat(var(--cols), 1fr);
+    gap: 1rem;
+
+    @media only screen and (min-width: 45rem) {
+        --cols: 2;
+    }
+
+    @media only screen and (min-width: 65rem) {
+        --cols: 3;
+    }
+}
+
+.card {
+    text-align: center;
+
+    background-color: #181818;
+    border: 0.0125rem solid #fff;
+    border-radius: 0.5rem;
+
+    translate: 0;
+    transition: translate 0.2s ease-in-out; 
+}
+
+.card:where(:hover, :focus-visible) {
+    cursor: pointer;
+    translate: 0 -0.5rem;
+}

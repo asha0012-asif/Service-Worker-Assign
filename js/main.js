@@ -1,6 +1,8 @@
 /* ISSUES:
 - historyAPI; displays only the image when clicking forward button (correct behaviour), displays all images when clicking backwards even though a hash value is present in the url 
-- historyAPI; displaying all images works when clicking forward button but shows nothing when clicking backwards button
+- historyAPI; displaying all images works when clicking forward button (correct behaviour) but shows nothing when clicking backwards button
+
+- back button needs to bring me back to the same set of users (should not reload and fetch new users)
 */
 
 const APP = {
@@ -43,9 +45,14 @@ const APP = {
             const card = APP.showOneCard(history.state);
             card.setAttribute("data-uid", location.hash.replace("#", ""));
 
+            history.replaceState(history.state, "", `${location.origin}${location.pathname}${location.hash}`);
+
             APP.cards.append(card);
         } else {
             console.log("Default");
+            location.hash.replace("#", "");
+            // no state is present though...
+            APP.showCards();
         }
 
     },
@@ -81,7 +88,7 @@ const APP = {
         }
     },
 
-    showCards: (users=[]) => {
+    showCards: (users) => {
         console.log("\nShowing Cards\n");
 
         if (!users) {
@@ -131,7 +138,7 @@ const APP = {
         console.log(hash);
 
         // change the hash value in the URL
-        history.pushState(user, "", `${location.href}${hash}`);
+        history.pushState(user, "", `${location.origin}${location.pathname}${hash}`);
         APP.checkState();
     },
 

@@ -18,6 +18,7 @@ const APP = {
 
         // register the service worker and add 
         // message event listener
+        APP.registerSW();
 
         // listen for navigation popstate event
 
@@ -31,7 +32,28 @@ const APP = {
         APP.cards.addEventListener("click", APP.handleCardClicks);
     },
 
-    registerSW: () => {},
+    registerSW: () => {
+        console.log("Registering Service Worker");
+
+        window.addEventListener("load", async () => {
+            if ("serviceWorker" in navigator) {
+                try {
+                    const registration = await navigator.serviceWorker.register("../sw.js", { scope: "/" });
+    
+                    registration && console.log("Service worker is registered", registration);
+    
+                } catch (err) {
+                    console.warn("Failed to register service worker", err);
+                }
+
+                // listen for messages from the SW
+                navigator.serviceWorker.addEventListener("message", APP.receiveMessageFromSW);
+
+            } else {
+                console.log("Service workers are not supported");
+            }
+        });
+    },
 
     checkState: () => {
         console.log("\nChecking State\n");
@@ -81,7 +103,10 @@ const APP = {
             });
 
             // cache newUsers as users.json file
+            // APP.sendMessageToSW(newUsers);
+            APP.sendMessageToSW({saveUsers: newUsers});
 
+            // display the cards
             APP.showCards(newUsers);
         } catch (err) {
             console.warn(err);
@@ -142,9 +167,19 @@ const APP = {
         APP.checkState();
     },
 
-    sendMessageToSW: () => {},
+    sendMessageToSW: (msg) => {
+        console.log("\nSending Message to SW\n");
+        console.log(msg);
 
-    receiveMessageFromSW: () => {}
+        if (navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage(msg);
+        }
+    },
+
+    receiveMessageFromSW: (ev) => {
+        console.log("\nReceiving Message from SW\n");
+        console.log(ev.data);
+    }
 }
 
 window.addEventListener("DOMContentLoaded", APP.init);

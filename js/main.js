@@ -1,10 +1,3 @@
-/* ISSUES:
-- historyAPI; displays only the image when clicking forward button (correct behaviour), displays all images when clicking backwards even though a hash value is present in the url 
-- historyAPI; displaying all images works when clicking forward button (correct behaviour) but shows nothing when clicking backwards button
-
-- back button needs to bring me back to the same set of users (should not reload and fetch new users)
-*/
-
 const APP = {
     BASE_URL: null,
     cards: null,
@@ -73,7 +66,7 @@ const APP = {
         } else {
             console.log("Default");
             location.hash.replace("#", "");
-            // no state is present though...
+
             APP.showCards();
         }
 
@@ -84,7 +77,7 @@ const APP = {
 
         try {
             const response = await fetch(APP.BASE_URL);
-            console.log(response);
+            console.log("RESPONSE", response);
 
             if (!response.ok) {
                 throw new Error(response.statusText);
@@ -103,11 +96,11 @@ const APP = {
             });
 
             // cache newUsers as users.json file
-            // APP.sendMessageToSW(newUsers);
-            APP.sendMessageToSW({saveUsers: newUsers});
+            APP.sendMessageToSW(newUsers);
 
             // display the cards
             APP.showCards(newUsers);
+
         } catch (err) {
             console.warn(err);
         }
@@ -172,7 +165,10 @@ const APP = {
         console.log(msg);
 
         if (navigator.serviceWorker.controller) {
-            navigator.serviceWorker.controller.postMessage(msg);
+            navigator.serviceWorker.controller.postMessage({
+                type: "Cache-Data",
+                msg
+            });
         }
     },
 

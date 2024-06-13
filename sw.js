@@ -1,69 +1,73 @@
 const version = '1';
-const CACHE_NAME_JSON = `asif-cache-v${version}--json`;
-const CACHE_NAME_STATIC = `asif-cache-v${version}--static`;
+const CACHE_NAME_JSON = `json-cache-v${version}`;
+const CACHE_NAME_STATIC = `static-cache-v${version}`;
 
 const BASE_URL = "https://random-data-api.com/api/v2/users?size=20";
 
 const assets = [
-    "/", 
-    "/index.html", 
-    "/css/css-reset.css",
-    "/js/main.js"
+    "./", 
+    "./index.html", 
+    "./css/css-reset.css",
+    "./js/main.js",
+    "./sw.js"
 ]
-
-let staticFileCache;
-let jsonFileCache;
 
 // extendable events - whatever code we put into sw, the browser wants to finish ASAP, when something needs to be delayed, you use ev.waitUntil(promise)
 self.addEventListener('install', (ev) => {
     //cache static files, if needed
     console.log("Installed");
-    ev.waitUntil(async () => {
-        staticFileCache = await caches.open(CACHE_NAME_STATIC);
-        staticFileCache.addAll(assets);
-    });
+    ev.waitUntil(
+        caches.open(CACHE_NAME_STATIC)
+        .then(cache => {
+            cache.addAll(assets);
+        })
+    );
 });
 
 self.addEventListener('activate', (ev) => {
-    //clear old caches, if desired
     console.log("Activated");
+    clients.claim().then(()=> console.log('SW is claimed'));
 });
 
 self.addEventListener('fetch', (ev) => {
+    console.log("\nFetch from SW\n");
+
     //handle all fetch requests
-    console.log("Intercepted a HTTP request", ev.request);
+    const reqURL = new URL(ev.request.url);
+    console.log("Intercepted a HTTP request", reqURL);
 
-    // ev.respondWith(async () => {
-    //     try {
-    //         jsonFileCache = await caches.open(CACHE_NAME_JSON);
-    //         const cachedResponse = await jsonFileCache.match("users.json");
-    //         console.log("Cached response:", cachedResponse);
+    const hostName = reqURL.hostname;
+    console.log("Host Name", hostName);
 
-    //         if (cachedResponse) {
-    //             return cachedResponse;    
-    //         } else {
-    //             try {     
-    //                 const fetchResponse = await fetch(ev.request);
-    //                 fetchResponse && jsonFileCache.put("users.json", fetchResponse.clone());
+    // trying to replace fetch event listener with cache response
+    if (BASE_URL.includes(hostName)) {
+        ev.respondWith(
+            caches.open(CACHE_NAME_JSON)
+            .then(cache => {
+                return cache.match("users.json");
+            })
+            .then(cacheResponse => {
+                console.log("Cached Response", cacheResponse);
 
-    //                 return fetchResponse;
-    //             } catch (err) {
-    //                 console.warn("Failed to fetch from API", err);
-    //             }
-    //         }
-
-    //     } catch (error) {
-    //         console.warn("Failed to open JSON cache");
-    //     }        
-    // });
+                return cacheResponse || 
+                fetch(ev.request)
+                .then(fetchResponse => {
+                    console.log(fetchResponse);
+                    caches.put("users.json", fetchResponse.clone());
+                    return fetchResponse;
+                }); 
+            })
+        );
+    }
 });
 
-// receive the user data from the main file
 self.addEventListener('message', (ev) => {
     //listen for messages from the main thread
     console.log("\nSW listening for messages from main\n");
     
     switch (ev.data.type) {
+
+        // receive the user data from the main file
         case "Cache-Data":
             console.log("\nReceived data from main thread\n", ev.data.msg);
             ev.waitUntil(cacheData(ev.data.msg));

@@ -1,9 +1,11 @@
 const APP = {
     BASE_URL: null,
+    CACHE_NAME_JSON: null,
     cards: null,
 
     init: () => {
         APP.BASE_URL = "https://random-data-api.com/api/v2/users?size=20";
+        APP.CACHE_NAME_JSON = `asif-cache-v1--json`,
 
         APP.cards = document.getElementById("cards");
         
@@ -69,13 +71,13 @@ const APP = {
 
             APP.showCards();
         }
-
     },
 
     getData: async () => {
         console.log("\nGetting Data\n");
 
         try {
+            // with the sw, this value is replaced with a new response from the promise it returns
             const response = await fetch(APP.BASE_URL);
             console.log("RESPONSE", response);
 
@@ -95,8 +97,10 @@ const APP = {
                 }
             });
 
-            // cache newUsers as users.json file
-            APP.sendMessageToSW(newUsers);
+            APP.sendMessageToSW({
+                type: "Cache-Data",
+                msg: users
+            });
 
             // display the cards
             APP.showCards(newUsers);
@@ -165,10 +169,7 @@ const APP = {
         console.log(msg);
 
         if (navigator.serviceWorker.controller) {
-            navigator.serviceWorker.controller.postMessage({
-                type: "Cache-Data",
-                msg
-            });
+            navigator.serviceWorker.controller.postMessage(msg);
         }
     },
 

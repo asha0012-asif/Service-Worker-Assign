@@ -11,9 +11,11 @@ const APP = {
         
         APP.checkState();
 
-        // register the service worker and add 
-        // message event listener
+        // register the service worker 
         APP.registerSW();
+        
+        // and add message event listener
+        // window.addEventListener("message", APP.receiveMessageFromSW);
 
         // listen for navigation popstate event
 
@@ -59,17 +61,34 @@ const APP = {
 
         if (location.hash !== "") {
             console.log("Hash");
+
             const card = APP.showOneCard(history.state);
             card.setAttribute("data-uid", location.hash.replace("#", ""));
 
             history.replaceState(history.state, "", `${location.origin}${location.pathname}${location.hash}`);
 
             APP.cards.append(card);
+
+            APP.sendMessageToSW({ 
+                type: "Handle-Card", 
+                msg: {
+                    uid: location.hash.split("#")[1],
+                    func: "showOneCard"
+                }
+            });
         } else {
             console.log("Default");
             location.hash.replace("#", "");
 
             APP.showCards();
+
+            APP.sendMessageToSW({ 
+                type: "Handle-Show-All-Cards", 
+                msg: {
+                    uid: location.hash.split("#")[1],
+                    func: "showCards"
+                }
+            });
         }
     },
 
@@ -95,11 +114,6 @@ const APP = {
                     email, 
                     avatar
                 }
-            });
-
-            APP.sendMessageToSW({
-                type: "Cache-Data",
-                msg: users
             });
 
             // display the cards
